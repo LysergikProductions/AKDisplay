@@ -1,26 +1,22 @@
+const string version = '0.1';
 bool init = true; // set to false after implementing INIT
-string initMsg = 'an unknown issue';
-string version = '0.1';
 
 // Post-offset locations for action-key presses
-uint16 loc_ak0 = 0;
-uint16 loc_ak1 = 0x40;
-uint16 loc_ak2 = 0x80;
-uint16 loc_ak3 = 0x100;
-uint16 loc_ak4 = 0x200;
-uint16 loc_ak5 = 0x400;
+const uint16 loc_ak0 = 0; const uint16 loc_ak1 = 0x40;
+const uint16 loc_ak2 = 0x80; const uint16 loc_ak3 = 0x100;
+const uint16 loc_ak4 = 0x200; const uint16 loc_ak5 = 0x400;
 
-bool AK0 = false; // will be used for displaying an optional
-bool AK1 = false; // green icon when all AKs are off
-bool AK2 = false;
-bool AK3 = false;
-bool AK4 = false;
-bool AK5 = false;
+// will be used for displaying an optional green icon when all AKs are off
+bool AK0 = false; bool AK1 = false;
+bool AK2 = false; bool AK3 = false;
+bool AK4 = false; bool AK5 = false;
 
 uint16 depressed = loc_ak0;
 uint16 released = loc_ak0;
 uint16 last_set = loc_ak0;
+
 string str_released = 'No AK';
+string initMsg = 'an unknown issue';
 
 void Detector() {
   while(true) {
