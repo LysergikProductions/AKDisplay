@@ -1,4 +1,4 @@
-﻿// Need to add detection for double respawn, retiring, and map change (ak resets)
+// Need to add detection for double respawn, retiring, and map change (ak resets)
 
 namespace Utils {
     string GetStrAK(uint16 _value) {
@@ -10,12 +10,18 @@ namespace Utils {
         else if (_value == loc_ak5) return "AK5";
         else return "Unrecognized memory location";
     }
+    
+    void resetAKs() {
+        AK0 = false; AK1 = false; AK2 = false;
+        AK3 = false; AK4 = false; AK5 = false;
+    }
 }
 
 namespace Core {
     void INIT() {
         print('Initializing AK Display..');
         // check if plugin is up-to-date and check for other potential issues
+        init = true;
         print('AK Display successfully initialized!');
     }
 
@@ -27,8 +33,7 @@ namespace Core {
         last_set = _value;
         str_released = Utils::GetStrAK(_value);
     }
-
-    // 0x40 -> ak1, 0x80 -> ak2, 0x100 -> ak3, 0x200 -> ak4, 0x400 -> ak5, 0x0 -> nothing
+    
     const uint16 OFFSET_ARENA_INTERFACE_AK_PRESSED = 0x10b0;
     
     uint16 ReadAKPressed() {
