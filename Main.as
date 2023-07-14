@@ -28,7 +28,7 @@ const uint16 loc_ak2 = 0x80; const uint16 loc_ak3 = 0x100;
 const uint16 loc_ak4 = 0x200; const uint16 loc_ak5 = 0x400;
 
 // For globally accessing ak statuses
-bool AK0, AK1, AK2, AK3, AK4, AK5 = false;
+bool AK0, AK1, AK2, AK3, AK4, AK5;
 
 // For tracking key-press states and storing currently active AK
 uint16 depressed, released, last_set = loc_ak0;
