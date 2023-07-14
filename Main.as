@@ -27,12 +27,13 @@ const uint16 loc_ak0 = 0; const uint16 loc_ak1 = 0x40;
 const uint16 loc_ak2 = 0x80; const uint16 loc_ak3 = 0x100;
 const uint16 loc_ak4 = 0x200; const uint16 loc_ak5 = 0x400;
 
-// for globally accessing ak statuses
+// For globally accessing ak statuses
 bool AK0, AK1, AK2, AK3, AK4, AK5 = false;
 
-// for tracking key-press states and storing currently active AK
+// For tracking key-press states and storing currently active AK
 uint16 depressed, released, last_set = loc_ak0;
 
+// Some debugging variables
 string str_released = 'No AK';
 string initMsg = 'an unknown issue';
 
@@ -64,9 +65,7 @@ void AKDetector() {
           }
 
           // An action key is released and the previous *AK value was the same*
-          else if (depressed == 0 && released == 0 && gameTime >= 0) {
-              Core::SetAK(0);
-          }
+          else if (depressed == 0 && released == 0) Core::SetAK(0);
 
           // Reset values when all AKs are turned off
           if (last_set == depressed && gameTime >= 0) Utils::resetAKs();
