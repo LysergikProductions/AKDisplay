@@ -39,9 +39,14 @@ string initMsg = 'an unknown issue';
 void AKDetector() {
   while(true) {
       depressed = Core::ReadAKPressed();
+      int gameTime = Core::GetCurrentRaceTime(GetApp());
+      //print(gameTime);
+      
+      // Reset AKs when gameTime is less than 0
+      if (gameTime < 0) { Core::SetLastPressed(loc_ak0); Core::SetAK(loc_ak0); }
       
       // An action key is depressed, so which one?
-      if (depressed > loc_ak0) {
+      if (depressed > loc_ak0 && gameTime >= 0) {
           if (depressed == loc_ak1) Core::SetLastPressed(depressed); 
           else if (depressed == loc_ak2) Core::SetLastPressed(depressed); 
           else if (depressed == loc_ak3) Core::SetLastPressed(depressed); 
@@ -50,7 +55,7 @@ void AKDetector() {
       }
           
       // An action key is released and the previous *AK value was different*
-      else if (depressed == loc_ak0 && released != loc_ak0) {
+      else if (depressed == loc_ak0 && released != loc_ak0 && gameTime >= 0) {
           if (released == loc_ak1) Core::SetAK(released);
           else if (released == loc_ak2) Core::SetAK(released);
           else if (released == loc_ak3) Core::SetAK(released);
@@ -59,15 +64,12 @@ void AKDetector() {
       }
 
       // An action key is released and the previous *AK value was the same*
-      else if (depressed == 0 && released == 0) {
+      else if (depressed == 0 && released == 0 && gameTime >= 0) {
           Core::SetAK(0);
       }
 
       // Reset values when all AKs are turned off
-      if (last_set == depressed) {
-          Utils::resetAKs();
-          released = loc_ak0;
-      }
+      if (last_set == depressed && gameTime >= 0) Utils::resetAKs();
       
       print(str_released + ' is active!'); 
       //print('Going to next tick..');
