@@ -19,7 +19,7 @@
  *
  * */
 
-float version = 0.1; int build = 1;
+const float version = 0.1; const int build = 1;
 bool init = true; // set to false after implementing INIT
 
 // 0x40 -> ak1, 0x80 -> ak2, 0x100 -> ak3, 0x200 -> ak4, 0x400 -> ak5, 0x0 -> nothing
