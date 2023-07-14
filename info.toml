@@ -1,4 +1,5 @@
 [meta]
 name        = "AK Display"
 author      = "Sinse420"
-category    = "HUD"
+category    = "Overlay"
+version     = "0.1"
