@@ -35,6 +35,8 @@ namespace Utils {
     void resetAKs() {
         AK0 = false; AK1 = false; AK2 = false;
         AK3 = false; AK4 = false; AK5 = false;
+
+        released = loc_ak0;
     }
 }
 
@@ -52,6 +54,9 @@ namespace Core {
 
     void SetAK(uint16 _value) {
         last_set = _value;
+        
+        // set global ak status booleans here
+        
         str_released = Utils::GetStrAK(_value);
     }
     
@@ -63,5 +68,44 @@ namespace Core {
             throw('Check that CurrentPlayground and ArenaInterface are not null before calling.');
         }
         return Dev::GetOffsetUint16(cp.ArenaInterface, OFFSET_ARENA_INTERFACE_AK_PRESSED);
+    }
+
+    CSmScriptPlayer@ Get_ControlledPlayer_ScriptAPI(CGameCtnApp@ app) {
+        try {
+            auto ControlledPlayer = cast<CSmPlayer>(app.CurrentPlayground.GameTerminals[0].ControlledPlayer);
+            if (ControlledPlayer is null) return null;
+            return cast<CSmScriptPlayer>(ControlledPlayer.ScriptAPI);
+        } catch {
+            return null;
+        }
+    }
+
+    CSmScriptPlayer@ Get_GUIPlayer_ScriptAPI(CGameCtnApp@ app) {
+        try {
+            auto GUIPlayer = cast<CSmPlayer>(app.CurrentPlayground.GameTerminals[0].GUIPlayer);
+            if (GUIPlayer is null) return null;
+            return cast<CSmScriptPlayer>(GUIPlayer.ScriptAPI);
+        } catch {
+            return null;
+        }
+    }
+    
+    int Get_Player_StartTime(CGameCtnApp@ app) {
+        try {
+            return Get_GUIPlayer_ScriptAPI(app).StartTime;
+        } catch {}
+        try {
+            return Get_ControlledPlayer_ScriptAPI(app).StartTime;
+        } catch {}
+        return -1;
+    }
+    
+    int GetCurrentRaceTime(CGameCtnApp@ app) {
+        if (app.Network.PlaygroundClientScriptAPI is null) return 0;
+        int gameTime = app.Network.PlaygroundClientScriptAPI.GameTime;
+        int startTime = Get_Player_StartTime(GetApp());
+        //if (startTime < 0) return 0;
+        return gameTime - startTime;
+        // return Math::Abs(gameTime - startTime);  // when formatting via Time::Format, negative ints don't work.
     }
 }
