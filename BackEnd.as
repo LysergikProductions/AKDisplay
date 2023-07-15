@@ -19,7 +19,7 @@
  *
  * */
 
-// Need to add detection for double respawn, retiring, and map change (ak resets)
+// Need to add detection for double-respawns (ak resets)
 
 namespace Utils {
     string GetStrAK(uint16 _value) {
@@ -33,46 +33,50 @@ namespace Utils {
     }
     
     void resetAKs() {
+        released = loc_ak0;
         AK0 = false; AK1 = false; AK2 = false;
         AK3 = false; AK4 = false; AK5 = false;
-
-        released = loc_ak0;
     }
 }
 
 namespace Core {
     void INIT() {
-        print('Initializing AK Display..');
+        print('Initializing AK Display..'); Utils::resetAKs();
         // check if plugin is up-to-date and check for other potential issues
         init = true;
         print('AK Display successfully initialized!');
     }
-
+    
     void SetLastPressed(uint16 _pressed) {
         if (_pressed != released) released = _pressed;
     }
 
     void SetAK(uint16 _value) {
         last_set = _value;
-        
-        // set global ak status booleans here
-        
         str_released = Utils::GetStrAK(_value);
+        // ** set global ak status booleans here ** \\
     }
     
+    bool isDriving() {
+        auto _cp = cast<CSmArenaClient>(app.CurrentPlayground);
+        if (_cp is null || _cp.ArenaInterface is null) return false;
+        else return true;
+    }
+    
+    // Credit to @Xertrov for the following block
+    // ------------------------------------------------- \\
     const uint16 OFFSET_ARENA_INTERFACE_AK_PRESSED = 0x10b0;
-    
-    uint16 ReadAKPressed() {
-        auto cp = cast<CSmArenaClient>(GetApp().CurrentPlayground);
-        if (cp is null || cp.ArenaInterface is null) {
-            throw('Check that CurrentPlayground and ArenaInterface are not null before calling.');
-        }
-        return Dev::GetOffsetUint16(cp.ArenaInterface, OFFSET_ARENA_INTERFACE_AK_PRESSED);
-    }
 
-    CSmScriptPlayer@ Get_ControlledPlayer_ScriptAPI(CGameCtnApp@ app) {
+    uint16 ReadAKPressed() {
+        auto _cp = cast<CSmArenaClient>(app.CurrentPlayground);
+        if (isDriving()) return Dev::GetOffsetUint16(_cp.ArenaInterface, OFFSET_ARENA_INTERFACE_AK_PRESSED);
+        else return 0;
+    }
+    // ------------------------------------------------- \\
+
+    CSmScriptPlayer@ Get_ControlledPlayer_ScriptAPI(CGameCtnApp@ _app) {
         try {
-            auto ControlledPlayer = cast<CSmPlayer>(app.CurrentPlayground.GameTerminals[0].ControlledPlayer);
+            auto ControlledPlayer = cast<CSmPlayer>(_app.CurrentPlayground.GameTerminals[0].ControlledPlayer);
             if (ControlledPlayer is null) return null;
             return cast<CSmScriptPlayer>(ControlledPlayer.ScriptAPI);
         } catch {
@@ -80,9 +84,9 @@ namespace Core {
         }
     }
 
-    CSmScriptPlayer@ Get_GUIPlayer_ScriptAPI(CGameCtnApp@ app) {
+    CSmScriptPlayer@ Get_GUIPlayer_ScriptAPI(CGameCtnApp@ _app) {
         try {
-            auto GUIPlayer = cast<CSmPlayer>(app.CurrentPlayground.GameTerminals[0].GUIPlayer);
+            auto GUIPlayer = cast<CSmPlayer>(_app.CurrentPlayground.GameTerminals[0].GUIPlayer);
             if (GUIPlayer is null) return null;
             return cast<CSmScriptPlayer>(GUIPlayer.ScriptAPI);
         } catch {
@@ -90,22 +94,23 @@ namespace Core {
         }
     }
     
-    int Get_Player_StartTime(CGameCtnApp@ app) {
+    int Get_Player_StartTime(CGameCtnApp@ _app) {
         try {
-            return Get_GUIPlayer_ScriptAPI(app).StartTime;
+            return Get_GUIPlayer_ScriptAPI(_app).StartTime;
         } catch {}
         try {
-            return Get_ControlledPlayer_ScriptAPI(app).StartTime;
+            return Get_ControlledPlayer_ScriptAPI(_app).StartTime;
         } catch {}
         return -1;
     }
     
-    int GetCurrentRaceTime(CGameCtnApp@ app) {
-        if (app.Network.PlaygroundClientScriptAPI is null) return 0;
-        int gameTime = app.Network.PlaygroundClientScriptAPI.GameTime;
-        int startTime = Get_Player_StartTime(GetApp());
-        //if (startTime < 0) return 0;
+    int GetCurrentRaceTime(CGameCtnApp@ _app) {
+        if (_app.Network.PlaygroundClientScriptAPI is null) return 0;
+        int gameTime = _app.Network.PlaygroundClientScriptAPI.GameTime;
+        int startTime = Get_Player_StartTime(app);
+        //if (startTime < 0) return 0; //
         return gameTime - startTime;
         // return Math::Abs(gameTime - startTime);  // when formatting via Time::Format, negative ints don't work.
+        // if < 0 return 0 should prevent this anyway i think, tbd
     }
 }
