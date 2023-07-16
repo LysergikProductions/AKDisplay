@@ -19,7 +19,7 @@
  *
  * */
 
-const float version = 0.1; const int build = 4;
+const float version = 0.1; const int build = 5;
 const string testedGameVersion =
      "2023-06-22-11_50 (0C86FF47A34D62F38B6A67008446D990A22DE344B96F62A8ACA97DE0CA1F6D9A)";
 

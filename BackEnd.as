@@ -43,9 +43,9 @@ namespace Core {
     void INIT() { // check if plugin is up-to-date and check for other potential issues
         print('Initializing AK Display..'); Utils::resetAKs();
 
-        //
-
+        print('Version: ' + version + ' build ' + build);
         init = true;
+        
         print('AK Display successfully initialized!');
     }
     
