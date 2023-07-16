@@ -18,12 +18,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * */
-const float version = 0.1; const int build = 3;
+
+const float version = 0.1; const int build = 4;
 const string testedGameVersion =
      "2023-06-22-11_50 (0C86FF47A34D62F38B6A67008446D990A22DE344B96F62A8ACA97DE0CA1F6D9A)";
-
-bool init = false;
-auto app = GetApp();
 
 // 0x40 -> ak1, 0x80 -> ak2, 0x100 -> ak3, 0x200 -> ak4, 0x400 -> ak5, 0x0 -> nothing
 const uint16 loc_ak0 = 0; const uint16 loc_ak1 = 0x40;
@@ -38,23 +36,53 @@ uint16 depressed = loc_ak0;
 uint16 released = loc_ak0;
 uint16 last_set = loc_ak0;
 
+// Global status flags
+bool init, inGame, akActiveLastFrame;
+
 // Some debugging variables
 string str_released = 'No AK'; string initMsg = 'an unknown issue';
 
 void AKDetector() {
     while(true) {
-        int _mapTime = Core::GetCurrentRaceTime(app);
-        //print(_mapTime);
-        
-        // reset go to next tick whenever there is no active map
-        if (Core:: isDriving() ==  false) {
-            Utils::resetAKs(); yield();
-        }
-        
+        int _sceneTime = Core::GetCurrentSceneTime(GetApp());
+        //print('sceneTime == ' + _sceneTime);
+
+        //auto tester = GetApp().InputPort.ConnectedDevices;
+        //print(tester);
+
+        // optimize and refactor this borrowed code (from no respawn timer)
+        auto playground = cast<CSmArenaClient>(GetApp().CurrentPlayground);
+
+        bool inGame = false; int preCPIdx = -1; int firstCPIdx = -1;
+        uint64 lastCPTime = 0; int respawnCount = -1; uint64 timeShift = 0;
+
+	    if (playground is null || playground.Arena is null
+            || playground.Map is null || playground.GameTerminals.Length <= 0
+		    || (playground.GameTerminals[0].UISequence_Current != CGamePlaygroundUIConfig::EUISequence::Playing
+			&& playground.GameTerminals[0].UISequence_Current != CGamePlaygroundUIConfig::EUISequence::Finish
+			&& playground.GameTerminals[0].UISequence_Current != CGamePlaygroundUIConfig::EUISequence::EndRound) )
+	            {
+		            inGame = false;
+		            firstCPIdx = preCPIdx = -1;
+		            return;
+	            }
+
+        auto player = cast<CSmPlayer>(GetApp().CurrentPlayground.GameTerminals[0].GUIPlayer);
+	    auto scriptPlayer = player is null ? null : cast<CSmScriptPlayer>(player.ScriptAPI);
+	    int64 raceTime = 0;
+
+        /* both these return int 4 when player has never respawned in this run
+        //print(player.CurrentLaunchedRespawnLandmarkIndex);
+        //print(player.CurrentStoppedRespawnLandmarkIndex);
+
+        need to create a hashmap Map<uint CPID, array AK_statuses> to store the previous
+        CP's AK state to prevent user from desyncing the plugin's AK flags from their actual values */
+
+        if (!Core:: isDriving()) { Utils::resetAKs(); yield(); }
         depressed = Core::ReadAKPressed();
         
-        // Reset AKs when _mapTime is less than 0
-        if (_mapTime < 0) { Core::SetLastPressed(loc_ak0); Core::SetAK(loc_ak0); }
+        // Reset AKs when _sceneTime is less than 0
+        if (_sceneTime < 0) { Core::SetLastPressed(loc_ak0); Core::SetAK(loc_ak0); }
         else {
             // An action key is depressed, so which one?
             if (depressed > loc_ak0) {
@@ -67,6 +95,8 @@ void AKDetector() {
 
             // An action key is released and the previous *AK value was different*
             else if (depressed == loc_ak0 && released != loc_ak0) {
+                akActiveLastFrame = true;
+
                 if (released == loc_ak1) Core::SetAK(released);
                 else if (released == loc_ak2) Core::SetAK(released);
                 else if (released == loc_ak3) Core::SetAK(released);
@@ -78,10 +108,16 @@ void AKDetector() {
             else if (depressed == 0 && released == 0) Core::SetAK(0);
 
             // Reset values when all AKs are turned off
-            if (last_set == depressed && _mapTime >= 0) Utils::resetAKs();
+            if (last_set == depressed && _sceneTime >= 0) Utils::resetAKs();
         }
 
-        print(str_released + ' is active!');
+        // for dev, will run GUI update here instead
+        if (str_released != 'No AK') print(str_released + ' is active!');
+        else if (akActiveLastFrame) {
+            print(str_released + ' is active!');
+            akActiveLastFrame = false;
+        }
+
         //print('Going to next tick..');
         yield(); // pause loop until next app-tick
     }
