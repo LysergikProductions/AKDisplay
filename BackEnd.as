@@ -23,7 +23,7 @@
 
 namespace Utils {
     string GetStrAK(uint16 _value) {
-        if (_value == loc_ak0) return "No Ak";
+        if (_value == loc_ak0) return "No AK";
         else if (_value == loc_ak1) return "AK1";
         else if (_value == loc_ak2) return "AK2";
         else if (_value == loc_ak3) return "AK3";
@@ -40,9 +40,11 @@ namespace Utils {
 }
 
 namespace Core {
-    void INIT() {
+    void INIT() { // check if plugin is up-to-date and check for other potential issues
         print('Initializing AK Display..'); Utils::resetAKs();
-        // check if plugin is up-to-date and check for other potential issues
+
+        //
+
         init = true;
         print('AK Display successfully initialized!');
     }
@@ -58,9 +60,8 @@ namespace Core {
     }
     
     bool isDriving() {
-        auto _cp = cast<CSmArenaClient>(app.CurrentPlayground);
-        if (_cp is null || _cp.ArenaInterface is null) return false;
-        else return true;
+        auto _scene = cast<CSmArenaClient>(GetApp().CurrentPlayground);
+        return _scene !is null && _scene.ArenaInterface !is null && GetCurrentSceneTime(GetApp()) > 0;
     }
     
     // Credit to @Xertrov for the following block
@@ -68,7 +69,7 @@ namespace Core {
     const uint16 OFFSET_ARENA_INTERFACE_AK_PRESSED = 0x10b0;
 
     uint16 ReadAKPressed() {
-        auto _cp = cast<CSmArenaClient>(app.CurrentPlayground);
+        auto _cp = cast<CSmArenaClient>(GetApp().CurrentPlayground);
         if (isDriving()) return Dev::GetOffsetUint16(_cp.ArenaInterface, OFFSET_ARENA_INTERFACE_AK_PRESSED);
         else return 0;
     }
@@ -104,10 +105,10 @@ namespace Core {
         return -1;
     }
     
-    int GetCurrentRaceTime(CGameCtnApp@ _app) {
+    int GetCurrentSceneTime(CGameCtnApp@ _app) {
         if (_app.Network.PlaygroundClientScriptAPI is null) return 0;
         int gameTime = _app.Network.PlaygroundClientScriptAPI.GameTime;
-        int startTime = Get_Player_StartTime(app);
+        int startTime = Get_Player_StartTime(GetApp());
         //if (startTime < 0) return 0; //
         return gameTime - startTime;
         // return Math::Abs(gameTime - startTime);  // when formatting via Time::Format, negative ints don't work.
